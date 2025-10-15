@@ -23,8 +23,8 @@ app.post('/api/chat', async (req, res) => {
     const { message } = req.body;
     if (!message) return res.status(400).json({ error: 'No message provided' });
 
-    // ? Correct template literal
-    const reply = \You said: "\". VevoAI is thinking...\;
+    // Correct template literal
+    const reply = `You said: "${message}". VevoAI is thinking...`;
 
     vevoMemory.learnedResponses.push({ id: Date.now(), taskType: 'chat', payload: message, response: reply, confidence: 0.5 });
     saveMemory();
@@ -34,6 +34,6 @@ app.post('/api/chat', async (req, res) => {
 app.use(express.static(path.join(__dirname, 'public')));
 app.use((req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
-app.listen(port, () => console.log(\? VevoAI running at http://localhost:\8080\));
+app.listen(port, () => console.log(`VevoAI running at http://localhost:${port}`));
 
 process.on('SIGINT', () => { saveMemory(); process.exit(0); });
