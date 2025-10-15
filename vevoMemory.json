@@ -1,0 +1,13 @@
+{
+  "personality": "friendly",
+  "learnedResponses": [
+    {
+      "id": 1759865293436,
+      "taskType": "chat",
+      "domain": "general",
+      "payload": "hello",
+      "response": "You said: \"hello\". VevoAI is thinking...",
+      "confidence": 0.5
+    }
+  ]
+}
