@@ -1,0 +1,89 @@
+[2025-10-15T19:12:03.944Z] OpenRouter API failure
+AxiosError: Request failed with status code 401
+    at settle (file:///C:/Users/Admin/Vevo/node_modules/axios/lib/core/settle.js:19:12)
+    at IncomingMessage.handleStreamEnd (file:///C:/Users/Admin/Vevo/node_modules/axios/lib/adapters/http.js:617:11)
+    at IncomingMessage.emit (node:events:531:35)
+    at endReadableNT (node:internal/streams/readable:1698:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+    at Axios.request (file:///C:/Users/Admin/Vevo/node_modules/axios/lib/core/Axios.js:45:41)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async queryOpenRouter (file:///C:/Users/Admin/Vevo/server.js:112:26)
+    at async Promise.all (index 0)
+    at async file:///C:/Users/Admin/Vevo/server.js:129:30
+
+[2025-10-15T19:15:20.882Z] OpenRouter API failure
+AxiosError: Request failed with status code 401
+    at settle (file:///C:/Users/Admin/Vevo/node_modules/axios/lib/core/settle.js:19:12)
+    at IncomingMessage.handleStreamEnd (file:///C:/Users/Admin/Vevo/node_modules/axios/lib/adapters/http.js:617:11)
+    at IncomingMessage.emit (node:events:531:35)
+    at endReadableNT (node:internal/streams/readable:1698:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+    at Axios.request (file:///C:/Users/Admin/Vevo/node_modules/axios/lib/core/Axios.js:45:41)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async queryOpenRouter (file:///C:/Users/Admin/Vevo/server.js:112:26)
+    at async Promise.all (index 0)
+    at async file:///C:/Users/Admin/Vevo/server.js:129:30
+
+[2025-10-15T19:15:39.321Z] OpenRouter API failure
+AxiosError: Request failed with status code 401
+    at settle (file:///C:/Users/Admin/Vevo/node_modules/axios/lib/core/settle.js:19:12)
+    at IncomingMessage.handleStreamEnd (file:///C:/Users/Admin/Vevo/node_modules/axios/lib/adapters/http.js:617:11)
+    at IncomingMessage.emit (node:events:531:35)
+    at endReadableNT (node:internal/streams/readable:1698:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+    at Axios.request (file:///C:/Users/Admin/Vevo/node_modules/axios/lib/core/Axios.js:45:41)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async queryOpenRouter (file:///C:/Users/Admin/Vevo/server.js:112:26)
+    at async Promise.all (index 0)
+    at async file:///C:/Users/Admin/Vevo/server.js:129:30
+
+[2025-10-15T19:19:01.988Z] OpenRouter API failure
+AxiosError: Request failed with status code 401
+    at settle (file:///C:/Users/Admin/Vevo/node_modules/axios/lib/core/settle.js:19:12)
+    at IncomingMessage.handleStreamEnd (file:///C:/Users/Admin/Vevo/node_modules/axios/lib/adapters/http.js:617:11)
+    at IncomingMessage.emit (node:events:531:35)
+    at endReadableNT (node:internal/streams/readable:1698:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+    at Axios.request (file:///C:/Users/Admin/Vevo/node_modules/axios/lib/core/Axios.js:45:41)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async queryOpenRouter (file:///C:/Users/Admin/Vevo/server.js:112:26)
+    at async Promise.all (index 0)
+    at async file:///C:/Users/Admin/Vevo/server.js:129:30
+
+[2025-10-15T20:07:16.547Z] OpenRouter API failure
+AxiosError: Request failed with status code 401
+    at settle (file:///C:/Users/Admin/Vevo/node_modules/axios/lib/core/settle.js:19:12)
+    at IncomingMessage.handleStreamEnd (file:///C:/Users/Admin/Vevo/node_modules/axios/lib/adapters/http.js:617:11)
+    at IncomingMessage.emit (node:events:531:35)
+    at endReadableNT (node:internal/streams/readable:1698:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+    at Axios.request (file:///C:/Users/Admin/Vevo/node_modules/axios/lib/core/Axios.js:45:41)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async queryOpenRouter (file:///C:/Users/Admin/Vevo/server.js:112:26)
+    at async Promise.all (index 0)
+    at async file:///C:/Users/Admin/Vevo/server.js:129:30
+
+[2025-10-18T15:32:26.241Z] OpenRouter API success (key 1)
+[object Object]
+
+[2025-10-18T15:32:36.614Z] OpenRouter API success (key 1)
+[object Object]
+
+[2025-10-18T15:35:13.769Z] OpenRouter API success (key 1)
+[object Object]
+
+[2025-10-18T15:37:18.949Z] OpenRouter API success (key 1)
+[object Object]
+
+[2025-10-18T15:37:28.169Z] OpenRouter API success (key 1)
+[object Object]
+
+[2025-10-18T15:43:04.461Z] OpenRouter API success (key 1)
+[object Object]
+
+[2025-10-18T15:44:40.076Z] OpenRouter API success (key 1)
+[object Object]
+
+[2025-10-18T15:51:17.465Z] OpenRouter API success (key 1)
+[object Object]
+
