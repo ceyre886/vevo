@@ -1,0 +1,22 @@
+[2025-10-18T22:16:03.570Z] Learning review failed: [object Object]
+[2025-10-18T22:16:03.571Z] Auto-learning cycle result: null
+[2025-10-18T23:31:06.059Z] Learning review failed: [object Object]
+[2025-10-18T23:31:06.093Z] Auto-learning cycle result: null
+[2025-10-19T00:33:59.631Z] Learning review failed: [object Object]
+[2025-10-19T00:33:59.633Z] Auto-learning cycle result: null
+[2025-10-19T01:39:23.040Z] Learning review failed: [object Object]
+[2025-10-19T01:39:23.111Z] Auto-learning cycle result: null
+[2025-10-19T02:39:22.640Z] Learning review failed: [object Object]
+[2025-10-19T02:39:22.642Z] Auto-learning cycle result: null
+[2025-10-19T14:22:01.265Z] Learning review failed: getaddrinfo ENOTFOUND openrouter.ai
+[2025-10-19T14:22:01.279Z] Auto-learning cycle result: null
+[2025-10-20T01:41:47.804Z] Learning review failed: getaddrinfo ENOTFOUND openrouter.ai
+[2025-10-20T01:41:47.820Z] Auto-learning cycle result: null
+[2025-10-20T01:57:11.057Z] Learning review failed: [object Object]
+[2025-10-20T01:57:11.067Z] Auto-learning cycle result: null
+[2025-10-20T02:27:07.675Z] Learning review skipped: No OpenRouter API key provided (OPENROUTER_API_KEY_1). Skipping learning cycle.
+[2025-10-20T02:27:07.683Z] Auto-learning cycle result: {"error":"No OpenRouter API key provided (OPENROUTER_API_KEY_1). Skipping learning cycle."}
+[2025-10-20T18:28:03.750Z] Learning review skipped: No OpenRouter API key provided (OPENROUTER_API_KEY_1). Skipping learning cycle.
+[2025-10-20T18:28:03.758Z] Auto-learning cycle result: {"error":"No OpenRouter API key provided (OPENROUTER_API_KEY_1). Skipping learning cycle."}
+[2025-10-20T18:28:50.805Z] Learning review skipped: No OpenRouter API key provided (OPENROUTER_API_KEY_1). Skipping learning cycle.
+[2025-10-20T18:28:50.811Z] Auto-learning cycle result: {"error":"No OpenRouter API key provided (OPENROUTER_API_KEY_1). Skipping learning cycle."}
