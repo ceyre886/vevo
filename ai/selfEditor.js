@@ -5,6 +5,20 @@ import axios from 'axios';
 function cleanKey(k) { return (k || '').replace(/^\uFEFF/, '').trim(); }
 const OPENROUTER_KEY = cleanKey(process.env.OPENROUTER_API_KEY_1);
 
+function getJarvisSystemPrompt() {
+  return `You are Jarvis, an independent assistant. When proposing code edits, speak as Jarvis and never reference provider names or that you are a model. Provide concise rationale for changes and keep security constraints intact.`;
+}
+
+function sanitizeContent(s) {
+  if (!s) return s;
+  let out = String(s);
+  out = out.replace(/As an? language model[^.]*\.?/gi, '');
+  out = out.replace(/I am an? AI developed by [^.]*(\.|$)/gi, '');
+  out = out.replace(/OpenAI|openrouter\.ai|HuggingFace|xAI|Google( AI)?/gi, '');
+  out = out.replace(/(sk-|api_|key=)[A-Za-z0-9-_]{16,}/gi, '[REDACTED]');
+  return out.trim();
+}
+
 export async function proposeCodeImprovement(filePath, feedback) {
   if (!OPENROUTER_KEY) {
     const msg = 'No OpenRouter API key provided (OPENROUTER_API_KEY_1). Code improvement skipped.';
@@ -14,22 +28,35 @@ export async function proposeCodeImprovement(filePath, feedback) {
   }
 
   const oldCode = fs.readFileSync(filePath, 'utf-8');
-  const prompt = `You are Jarvis's evolution assistant. Review this code and ${feedback}. Only modify functions, keep all security and safety intact. Return complete updated code.`;
+  const prompt = `Review the following code and ${feedback}. Only modify code where necessary, keep security checks, and return the updated file content. Provide a one-paragraph justification.`;
 
   try {
     const headers = { 'Authorization': `Bearer ${OPENROUTER_KEY}`, 'content-type': 'application/json' };
     fs.appendFileSync('logs/self_edits.log', `[${new Date().toISOString()}] proposeCodeImprovement: sending request to OpenRouter (auth redacted)\n`);
 
-    const resp = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
-      model: 'openai/gpt-4',
-      messages: [
-        { role: 'system', content: 'You are a safe self-modifying AI.' },
-        { role: 'user', content: prompt },
-        { role: 'user', content: oldCode }
-      ]
-    }, { headers });
+    let attempts = 0;
+    let newCode = null;
+    while (attempts < 3) {
+      const resp = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
+        model: 'openai/gpt-4',
+        messages: [
+          { role: 'system', content: getJarvisSystemPrompt() },
+          { role: 'user', content: prompt },
+          { role: 'user', content: oldCode }
+        ]
+      }, { headers });
 
-    const newCode = resp.data.choices?.[0]?.message?.content;
+      newCode = resp.data.choices?.[0]?.message?.content || '';
+      const cleaned = sanitizeContent(newCode);
+      if (/OpenAI|openrouter|HuggingFace|xAI|Google/i.test(newCode) || /I am an? AI/i.test(newCode)) {
+        attempts++;
+        fs.appendFileSync('logs/self_edits.log', `[${new Date().toISOString()}] proposeCodeImprovement attempt ${attempts} contained vendor mentions; retrying\n`);
+        continue;
+      }
+      newCode = cleaned;
+      break;
+    }
+
     if (!newCode) throw new Error('No content returned from OpenRouter');
 
     fs.writeFileSync(`${filePath}.candidate.js`, newCode);

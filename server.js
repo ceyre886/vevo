@@ -106,21 +106,34 @@ app.post('/api/chat', async (req, res) => {
       }
     }
 
-        // Sanitizer: remove vendor-identifying phrases and stringify objects
-        function sanitizeReply(raw) {
-                if (raw === null || raw === undefined) return null;
-                if (typeof raw === 'object') {
-                        try { raw = JSON.stringify(raw); } catch { raw = String(raw); }
-                }
-                let s = String(raw);
-                // Strip common vendor/model identity phrases
-                s = s.replace(/As an? language model[^.]*\.?/gi, '');
-                s = s.replace(/I am an? AI developed by [^.]*(\.|$)/gi, '');
-                s = s.replace(/As an AI[^.]*(\.|$)/gi, '');
-                s = s.replace(/I don't have the capability to[^.]*(\.|$)/gi, '');
-                s = s.replace(/\[object Object\]/gi, '[object]');
-                return s.trim();
+    // Sanitizer: remove vendor-identifying phrases and stringify objects
+    function sanitizeReply(raw) {
+        if (raw === null || raw === undefined) return null;
+        if (typeof raw === 'object') {
+            try { raw = JSON.stringify(raw); } catch { raw = String(raw); }
         }
+        let s = String(raw);
+        // Strip common vendor/model identity phrases and any accidental key leaks
+        s = s.replace(/As an? language model[^.]*\.?/gi, '');
+        s = s.replace(/I am an? AI developed by [^.]*(\.|$)/gi, '');
+        s = s.replace(/As an AI[^.]*(\.|$)/gi, '');
+        s = s.replace(/I don't have the capability to[^.]*(\.|$)/gi, '');
+        s = s.replace(/\[object Object\]/gi, '[object]');
+        // Remove obvious vendor names that should not be exposed
+        s = s.replace(/OpenAI/gi, '');
+        s = s.replace(/openrouter\.ai/gi, '');
+        s = s.replace(/HuggingFace/gi, '');
+        s = s.replace(/xAI/gi, '');
+        s = s.replace(/Google( AI)?/gi, '');
+        // redact anything that looks like API keys
+        s = s.replace(/(sk-|api_|key=)[A-Za-z0-9-_]{16,}/gi, '[REDACTED]');
+        return s.trim();
+    }
+
+    // Central Jarvis persona/system prompt used for all LLM calls
+    function getJarvisSystemPrompt() {
+        return `You are Jarvis, an independent assistant with deep domain knowledge. Always speak as Jarvis (do not reveal or mention vendor names, 'OpenAI', 'GPT', or your providers). Use a confident but humble tone, provide concise reasoning steps when asked, include provenance when you used external sources, and never say you are "an AI developed by" another organization. When you cannot answer, ask clarifying questions or offer to queue for learning.`;
+    }
 
     // Query OpenRouter (GPT-4) with robust error handling and automatic backup key retry
     // Generic key fallback system for any service
@@ -161,13 +174,36 @@ app.post('/api/chat', async (req, res) => {
             .filter(Boolean);
         return await tryKeys(keys, async (key, idx) => {
             const headers = { 'authorization': `Bearer ${key}`, 'content-type': 'application/json' };
-            const resp = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
-                model: 'openai/gpt-4',
-                messages: [{ role: 'user', content: msg }]
-            }, { headers });
-            logError({ request: { headers, body: msg }, response: resp.data }, `OpenRouter API success (key ${idx+1})`);
-            sources.push('OpenRouter');
-            return { content: resp.data.choices?.[0]?.message?.content || null };
+            // conservative retry loop: query up to 2 times if vendor-like phrases are present
+            let attempts = 0;
+            let content = null;
+            while (attempts < 2) {
+                const resp = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
+                    model: 'openai/gpt-4',
+                    messages: [
+                        { role: 'system', content: getJarvisSystemPrompt() },
+                        { role: 'user', content: msg }
+                    ]
+                }, { headers });
+                const raw = resp.data.choices?.[0]?.message?.content || '';
+                const cleaned = sanitizeReply(raw);
+                // if cleaned still contains vendor-identifying traces, retry with stricter instruction
+                if (/OpenAI|openrouter|HuggingFace|xAI|Google/i.test(raw) || /I am an? AI/i.test(raw)) {
+                    attempts++;
+                    logError({ note: `Vendor mentions detected; retrying attempt ${attempts}` }, `OpenRouter vendor-scan`);
+                    // on retry, prepend explicit instruction
+                    msg = `Please reply strictly as Jarvis and do not include any provider or vendor names. ${msg}`;
+                    continue;
+                }
+                content = cleaned;
+                // redact headers for logging
+                const redacted = { ...headers, authorization: headers.authorization ? 'Bearer [REDACTED]' : undefined };
+                logError({ request: { headers: redacted, body: msg }, response: resp.data }, `OpenRouter API success (key ${idx+1})`);
+                sources.push('OpenRouter');
+                return { content };
+            }
+            // If retries didn't produce a clean response, return last cleaned content or null
+            return { content };
         }, 'OpenRouter');
     }
 
@@ -181,7 +217,8 @@ app.post('/api/chat', async (req, res) => {
             const resp = await axios.post('https://api-inference.huggingface.co/models/gpt2', {
                 inputs: msg
             }, { headers });
-            logError({ request: { headers, body: msg }, response: resp.data }, `HuggingFace API success (key ${idx+1})`);
+            const redacted = { ...headers, authorization: headers.authorization ? 'Bearer [REDACTED]' : undefined };
+            logError({ request: { headers: redacted, body: msg }, response: resp.data }, `HuggingFace API success (key ${idx+1})`);
             sources.push('HuggingFace');
             return { content: resp.data[0]?.generated_text || null };
         }, 'HuggingFace');
@@ -194,10 +231,10 @@ app.post('/api/chat', async (req, res) => {
             .filter(Boolean);
         return await tryKeys(keys, async (key, idx) => {
             const resp = await axios.post(`https://generativelanguage.googleapis.com/v1beta2/models/text-bison-001:generateText?key=${key}`,
-                { prompt: { text: msg } },
+                { prompt: { text: `${getJarvisSystemPrompt()}\nUser: ${msg}` } },
                 { headers: { 'content-type': 'application/json' } }
             );
-            logError({ request: { key, body: msg }, response: resp.data }, `Google AI Studio API success (key ${idx+1})`);
+            logError({ request: { key: '[REDACTED]', body: msg }, response: resp.data }, `Google AI Studio API success (key ${idx+1})`);
             sources.push('GoogleAI');
             return { content: resp.data.candidates?.[0]?.output || null };
         }, 'GoogleAI');
@@ -212,9 +249,13 @@ app.post('/api/chat', async (req, res) => {
             const headers = { 'authorization': `Bearer ${key}`, 'content-type': 'application/json' };
             const resp = await axios.post('https://api.x.ai/v1/chat/completions', {
                 model: 'grok-1',
-                messages: [{ role: 'user', content: msg }]
+                messages: [
+                    { role: 'system', content: getJarvisSystemPrompt() },
+                    { role: 'user', content: msg }
+                ]
             }, { headers });
-            logError({ request: { headers, body: msg }, response: resp.data }, `xAI Grok API success (key ${idx+1})`);
+            const redacted = { ...headers, authorization: headers.authorization ? 'Bearer [REDACTED]' : undefined };
+            logError({ request: { headers: redacted, body: msg }, response: resp.data }, `xAI Grok API success (key ${idx+1})`);
             sources.push('xAI');
             return { content: resp.data.choices?.[0]?.message?.content || null };
         }, 'xAI');
@@ -380,6 +421,36 @@ app.get('/api/learning-status', (req, res) => {
     }
     res.json(results);
     });
+
+// /api/test-persona endpoint - returns a sample response using Jarvis persona
+app.get('/api/test-persona', async (req, res) => {
+    try {
+        const prompt = 'Provide a short 2-3 sentence answer introducing yourself.';
+        // Use internal prompt generator
+        const jarvisPrompt = `${getJarvisSystemPrompt()}\nUser: ${prompt}`;
+        // If OpenRouter key available, call it; otherwise synthesize a local Jarvis response
+        const key = (process.env.OPENROUTER_API_KEY_1 || '').replace(/^\uFEFF/, '').trim();
+        if (!key) {
+            // Local synthetic response that follows persona constraints
+            const local = `I am Jarvis — a practical, inquisitive assistant. I focus on providing clear, evidence-based answers and will ask clarifying questions when needed.`;
+            return res.json({ persona: 'jarvis', sample: local });
+        }
+        // Otherwise forward to OpenRouter safely
+        const headers = { 'authorization': `Bearer ${key}`, 'content-type': 'application/json' };
+        const resp = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
+            model: 'openai/gpt-4',
+            messages: [
+                { role: 'system', content: getJarvisSystemPrompt() },
+                { role: 'user', content: prompt }
+            ]
+        }, { headers });
+        const content = resp.data.choices?.[0]?.message?.content || '';
+        res.json({ persona: 'jarvis', sample: sanitizeReply(content) });
+    } catch (err) {
+        logError(err, 'Persona test failure');
+        res.status(500).json({ error: err?.message || String(err) });
+    }
+});
 
     // /api/upgrade endpoint
     app.post('/api/upgrade', (req, res) => {
