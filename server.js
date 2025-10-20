@@ -106,6 +106,22 @@ app.post('/api/chat', async (req, res) => {
       }
     }
 
+        // Sanitizer: remove vendor-identifying phrases and stringify objects
+        function sanitizeReply(raw) {
+                if (raw === null || raw === undefined) return null;
+                if (typeof raw === 'object') {
+                        try { raw = JSON.stringify(raw); } catch { raw = String(raw); }
+                }
+                let s = String(raw);
+                // Strip common vendor/model identity phrases
+                s = s.replace(/As an? language model[^.]*\.?/gi, '');
+                s = s.replace(/I am an? AI developed by [^.]*(\.|$)/gi, '');
+                s = s.replace(/As an AI[^.]*(\.|$)/gi, '');
+                s = s.replace(/I don't have the capability to[^.]*(\.|$)/gi, '');
+                s = s.replace(/\[object Object\]/gi, '[object]');
+                return s.trim();
+        }
+
     // Query OpenRouter (GPT-4) with robust error handling and automatic backup key retry
     // Generic key fallback system for any service
     async function tryKeys(keys, requestFn, contextLabel = 'AI Service') {
@@ -236,33 +252,53 @@ app.post('/api/chat', async (req, res) => {
         queryOpenRouter(message)
     ]);
     if (openRouterResp && openRouterResp.content) {
-        aiResponses.push(openRouterResp.content);
+        aiResponses.push(sanitizeReply(openRouterResp.content));
     }
 
     // Synthesize and cross-reference answers
-    let reply = aiResponses.filter(Boolean).join(' | ');
-    if (!reply) {
-        if (errors.length === 0) {
-            logError(new Error('No AI response'), 'Fallback response');
+    // sanitize all responses before joining
+    let reply = aiResponses.filter(Boolean).map(sanitizeReply).join(' | ');
+    let isFallback = false;
+    // Detect fallback/low-confidence answers
+    if (!reply || /As a language AI model|I am an AI developed by OpenAI|I can't/.test(reply)) {
+        isFallback = true;
+        reply = "I don't have a high-confidence answer yet. Would you like me to (A) clarify, (B) ask external sources, or (C) queue this for learning and return later?";
+        confidence = 0.2;
+        reasoningTrace.push('Unknown flow triggered: fallback or low-confidence answer.');
+        // Queue for learning
+        const queueFile = path.join(__dirname, 'learningQueue.json');
+        let learningQueue = [];
+        if (fs.existsSync(queueFile)) {
+            try { learningQueue = JSON.parse(fs.readFileSync(queueFile, 'utf-8')); } catch {}
         }
-        reply = "I'm unable to find a direct answer, but will continue learning.";
+        learningQueue.push({
+            id: Date.now(),
+            message,
+            sources,
+            errors,
+            timestamp: new Date().toISOString(),
+            status: 'queued'
+        });
+        fs.writeFileSync(queueFile, JSON.stringify(learningQueue, null, 2));
+    } else {
+        confidence = aiResponses.length ? 0.8 + 0.1 * aiResponses.length : 0.5;
+        reasoningTrace.push('Synthesized from: ' + sources.join(', '));
     }
-    confidence = aiResponses.length ? 0.8 + 0.1 * aiResponses.length : 0.5;
-    reasoningTrace.push('Synthesized from: ' + sources.join(', '));
 
     // Memory update
-    vevoMemory.learnedResponses.push({ id: Date.now(), taskType: 'chat', payload: message, response: reply, confidence, sources });
+    vevoMemory.learnedResponses.push({ id: Date.now(), taskType: 'chat', payload: message, response: reply, confidence, sources, isFallback });
     saveMemory();
     memoryUpdate = true;
 
-    // Output structured JSON with errors
+    // Output structured JSON with errors and fallback info
     res.json({
         reply,
         sources,
         reasoning_summary: reasoningTrace.join(' | '),
         confidence,
         memory_update: memoryUpdate,
-        errors
+        errors,
+        isFallback
     });
     });
 

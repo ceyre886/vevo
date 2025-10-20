@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Learning Progress & External Query Log</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #0b0c10; color: #fff; margin: 0; }
+    header { background: #1f2833; padding: 1rem; text-align: center; }
+    h1 { margin: 0; font-size: 2rem; }
+    .dashboard { max-width: 900px; margin: 2rem auto; background: #1f2833; border-radius: 12px; box-shadow: 0 2px 8px #0006; padding: 2rem; }
+    .section { margin-bottom: 2rem; }
+    .section-title { font-size: 1.3rem; margin-bottom: 1rem; color: #66fcf1; }
+    #learningChart { background: #fff; border-radius: 8px; }
+    .query-log { background: #0b0c10; border-radius: 8px; padding: 1rem; }
+    .query-row { padding: 0.7rem 0; border-bottom: 1px solid #222; cursor: pointer; }
+    .query-row:last-child { border-bottom: none; }
+    .query-row:hover { background: #232b33; }
+    .footer { text-align: center; color: #45a29e; margin-top: 2rem; font-size: 1rem; }
+    .dashboard img { max-width: 100px; display: block; margin: 0 auto 1rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>AI Learning Progress & External Query Log</h1>
+    <img src="https://www.exampleimagelink.com" alt="Dashboard" />
+  </header>
+  <div class="dashboard">
+    <div class="section">
+      <div class="section-title">Learning Progress Over Time</div>
+      <canvas id="learningChart" height="80"></canvas>
+    </div>
+    <div class="section">
+      <div class="section-title">Last Ten Queries Asked to External AIs</div>
+      <div class="query-log" id="queryLog"></div>
+    </div>
+  </div>
+  <div class="footer">AI Learning Progress Updated in Real Time</div>
+  <script>
+    let learningChart;
+    async function fetchDashboardData() {
+      const res = await fetch('/api/learning-status');
+      const data = await res.json();
+      // Mockup: parse learningPlan for knowledge count over time
+      let knowledgeData = [];
+      let timeLabels = [];
+      if (data.recentLogs) {
+        const logLines = data.recentLogs.split('\n').filter(Boolean);
+        logLines.forEach(line => {
+          const match = line.match(/(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}).*Knowledge count: (\d+)/);
+          if (match) {
+            timeLabels.push(match[1]);
+            knowledgeData.push(Number(match[2]));
+          }
+        });
+      }
+      // Fallback if no data
+      if (knowledgeData.length === 0) {
+        timeLabels = [new Date().toISOString()];
+        knowledgeData = [0];
+      }
+      // Update chart
+      if (!learningChart) {
+        const ctx = document.getElementById('learningChart').getContext('2d');
+        learningChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: timeLabels,
+            datasets: [{
+              label: 'Knowledge Acquired',
+              data: knowledgeData,
+              borderColor: '#66fcf1',
+              backgroundColor: 'rgba(102,252,241,0.1)',
+              tension: 0.2,
+              pointRadius: 5,
+              pointHoverRadius: 8,
+              pointBackgroundColor: '#45a29e',
+            }]
+          },
+          options: {
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return `Date: ${context.label} || Knowledge count: ${context.parsed.y}`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: { title: { display: true, text: 'Time' } },
+              y: { title: { display: true, text: 'Knowledge acquired' }, beginAtZero: true }
+            }
+          }
+        });
+      } else {
+        learningChart.data.labels = timeLabels;
+        learningChart.data.datasets[0].data = knowledgeData;
+        learningChart.update();
+      }
+      // Query log
+      const queryLogDiv = document.getElementById('queryLog');
+      queryLogDiv.innerHTML = '';
+      if (data.learningPlan && data.learningPlan.lastQueries) {
+        data.learningPlan.lastQueries.slice(-10).reverse().forEach((q, i) => {
+          const row = document.createElement('div');
+          row.className = 'query-row';
+          row.innerHTML = `Query #${i+1}: <b>${q.question}</b> || Date & Time: ${q.time}`;
+          row.onclick = () => window.open(`/query-details/${encodeURIComponent(q.id)}`,'_blank');
+          queryLogDiv.appendChild(row);
+        });
+      } else {
+        queryLogDiv.innerHTML = '<div style="color:#c5c6c7;">No recent queries found.</div>';
+      }
+    }
+    fetchDashboardData();
+    setInterval(fetchDashboardData, 5000);
+  </script>
+</body>
+</html>
