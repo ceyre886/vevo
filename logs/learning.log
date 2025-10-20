@@ -20,3 +20,6 @@
 [2025-10-20T18:28:03.758Z] Auto-learning cycle result: {"error":"No OpenRouter API key provided (OPENROUTER_API_KEY_1). Skipping learning cycle."}
 [2025-10-20T18:28:50.805Z] Learning review skipped: No OpenRouter API key provided (OPENROUTER_API_KEY_1). Skipping learning cycle.
 [2025-10-20T18:28:50.811Z] Auto-learning cycle result: {"error":"No OpenRouter API key provided (OPENROUTER_API_KEY_1). Skipping learning cycle."}
+[2025-10-20T19:14:32.282Z] Learning review skipped: No OpenRouter API key provided (OPENROUTER_API_KEY_1). Skipping learning cycle.
+[2025-10-20T19:14:32.292Z] Auto-learning cycle result: {"error":"No OpenRouter API key provided (OPENROUTER_API_KEY_1). Skipping learning cycle."}
+[2025-10-20T19:14:33.335Z] Learning review skipped: No OpenRouter API key provided (OPENROUTER_API_KEY_1). Skipping learning cycle.

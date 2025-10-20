@@ -99,3 +99,14 @@ AxiosError: Request failed with status code 401
 [2025-10-18T22:27:41.636Z] OpenRouter API success (key 1)
 [object Object]
 
+[2025-10-20T19:14:33.204Z] Invalid OpenRouter key: [REDACTED]
+AxiosError: Request failed with status code 401
+    at settle (file:///C:/Users/Admin/Vevo/node_modules/axios/lib/core/settle.js:19:12)
+    at IncomingMessage.handleStreamEnd (file:///C:/Users/Admin/Vevo/node_modules/axios/lib/adapters/http.js:617:11)
+    at IncomingMessage.emit (node:events:531:35)
+    at endReadableNT (node:internal/streams/readable:1698:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)
+    at Axios.request (file:///C:/Users/Admin/Vevo/node_modules/axios/lib/core/Axios.js:45:41)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///C:/Users/Admin/Vevo/server.js:362:26
+
